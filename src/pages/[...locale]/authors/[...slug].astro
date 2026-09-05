@@ -1,0 +1,67 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import Card from "@/components/Card.astro";
+import Footer from "@/components/Footer.astro";
+import Header from "@/components/Header.astro";
+import {
+  DEFAULT_LOCALE,
+  SUPPORTED_LOCALES,
+  type LocaleKey,
+} from "@/i18n/config";
+import { translateFor } from "@/i18n/utils";
+import Layout from "@/layouts/Layout.astro";
+import Main from "@/layouts/Main.astro";
+import getSortedPosts from "@/utils/getSortedPosts";
+import { getPostsGroupedByLocale } from "@/utils/posts";
+
+export async function getStaticPaths() {
+  const authorEntries = await getCollection("authors");
+
+  return SUPPORTED_LOCALES.flatMap(locale => {
+    return authorEntries.map(author => {
+      return {
+        params: {
+          locale: locale === DEFAULT_LOCALE ? undefined : locale,
+          slug: author.id,
+        },
+        props: {
+          authorData: author.data,
+        },
+      };
+    });
+  });
+}
+
+const { authorData } = Astro.props;
+const { slug } = Astro.params;
+const currentLocale = (Astro.currentLocale ?? DEFAULT_LOCALE) as LocaleKey;
+
+// Get posts for this specific author
+const postsByLocale = await getPostsGroupedByLocale({
+  draft: false,
+  allowedLocales: SUPPORTED_LOCALES,
+});
+
+const localePosts = postsByLocale[currentLocale] || [];
+const authorPosts = getSortedPosts(
+  localePosts.filter(
+    (post: CollectionEntry<"blog">) =>
+      post.data.author === slug && post.data.archived !== true
+  )
+);
+
+const t = translateFor(currentLocale);
+const authorName =
+  currentLocale === "fa" ? authorData.name : authorData.latinName;
+const authorBio = currentLocale === "fa" ? authorData.bio : authorData.latinBio;
+---
+
+<Layout title={`${authorName} | ${t("site.title")}`}>
+  <Header />
+  <Main pageTitle={`${t("postsBy")} ${authorName}`} pageDesc={authorBio}>
+    <ul class="space-y-4">
+      {authorPosts.map(post => <Card {...post} />)}
+    </ul>
+  </Main>
+  <Footer />
+</Layout>

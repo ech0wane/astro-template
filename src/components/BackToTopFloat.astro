@@ -1,0 +1,39 @@
+---
+import { translateFor } from "@/i18n/utils";
+import IconChevronLeft from "@/assets/icons/IconChevronLeft.svg";
+
+const t = translateFor(Astro.currentLocale);
+---
+
+<button
+  id="back-to-top-float"
+  class="focus-outline fixed end-6 bottom-6 z-50 hidden rounded-full bg-accent p-3 text-background shadow-lg transition-opacity duration-300 hover:opacity-80"
+  aria-label={t("navigation.backToTop")}
+  title={t("navigation.backToTop")}
+>
+  <IconChevronLeft class="h-5 w-5 rotate-90" />
+</button>
+
+<script>
+  function initBackToTop() {
+    const btn = document.querySelector("#back-to-top-float") as HTMLElement;
+    if (!btn) return;
+
+    const toggle = () => {
+      if (window.scrollY > 300) {
+        btn.classList.remove("hidden");
+      } else {
+        btn.classList.add("hidden");
+      }
+    };
+
+    window.addEventListener("scroll", toggle, { passive: true });
+    toggle();
+
+    btn.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  document.addEventListener("astro:page-load", initBackToTop);
+</script>

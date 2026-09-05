@@ -1,0 +1,131 @@
+---
+import Card from "@/components/Card.astro";
+import Footer from "@/components/Footer.astro";
+import Header from "@/components/Header.astro";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/i18n/config";
+import { getLocaleInfo, translateFor } from "@/i18n/utils";
+import Layout from "@/layouts/Layout.astro";
+import Main from "@/layouts/Main.astro";
+import getSortedPosts from "@/utils/getSortedPosts";
+import { getPostsByLocale } from "@/utils/posts";
+import { getYear, getMonthName } from "@/utils/dateFormatter";
+
+export async function getStaticPaths() {
+  return SUPPORTED_LOCALES.flatMap(locale => {
+    return {
+      params: { locale: locale === DEFAULT_LOCALE ? undefined : locale },
+    };
+  });
+}
+
+const { locale = DEFAULT_LOCALE } = Astro.params;
+
+const allPosts = await getPostsByLocale(locale, { draft: false });
+const sortedPosts = getSortedPosts(allPosts);
+
+const t = translateFor(Astro.currentLocale);
+const LOCALE = getLocaleInfo(Astro.currentLocale);
+
+// Group posts by year, then by month
+type PostEntry = (typeof sortedPosts)[number];
+const postsByYear = new Map<number, Map<number, PostEntry[]>>();
+
+for (const post of sortedPosts) {
+  const date = post.data.pubDatetime;
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+
+  if (!postsByYear.has(year)) {
+    postsByYear.set(year, new Map());
+  }
+  const yearMap = postsByYear.get(year)!;
+  if (!yearMap.has(month)) {
+    yearMap.set(month, []);
+  }
+  yearMap.get(month)!.push(post);
+}
+
+// Sort years descending
+const sortedYears = [...postsByYear.entries()].sort(([a], [b]) => b - a);
+---
+
+<Layout title={`${t("archives")} | ${t("site.title")}`} scrollSmooth>
+  <Header />
+  <Main pageTitle={t("archives")} pageDesc={t("archives.desc")}>
+    {
+      sortedPosts.length === 0 && (
+        <p class="mt-8 text-center text-foreground/60">{t("archives.empty")}</p>
+      )
+    }
+
+    <div class="mt-4 space-y-10">
+      {
+        sortedYears.map(([, monthsMap]) => {
+          const sortedMonths = [...monthsMap.entries()].sort(
+            ([a], [b]) => b - a
+          );
+          const yearPosts = [...monthsMap.values()].flat();
+          return (
+            <section>
+              <div class="mb-4 flex items-baseline gap-2 border-b border-border pb-2">
+                <h2 class="text-2xl font-bold text-accent">
+                  {getYear(yearPosts[0].data.pubDatetime, Astro.currentLocale)}
+                </h2>
+                <span class="text-sm text-foreground/50">
+                  {yearPosts.length.toLocaleString(LOCALE.langTag)}{" "}
+                  {yearPosts.length === 1
+                    ? t("archives.post")
+                    : t("archives.posts")}
+                </span>
+              </div>
+
+              <div class="space-y-6">
+                {sortedMonths.map(([, posts]) => (
+                  <div class="flex flex-col gap-1 sm:flex-row sm:gap-6">
+                    <div class="min-w-28 shrink-0 pt-1">
+                      <span class="text-lg font-semibold text-foreground/70">
+                        {getMonthName(
+                          posts[0].data.pubDatetime,
+                          Astro.currentLocale
+                        )}
+                      </span>
+                      <span class="ms-1 text-xs text-foreground/40">
+                        ({posts.length.toLocaleString(LOCALE.langTag)})
+                      </span>
+                    </div>
+                    <ul class="flex-1">
+                      {posts.map(data => (
+                        <Card {...data} />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })
+      }
+    </div>
+
+    {
+      sortedYears.length > 1 && (
+        <nav class="mt-10 border-t border-border pt-4">
+          <p class="mb-2 text-sm font-semibold text-foreground/60">
+            {t("archives.jumpTo")}
+          </p>
+          <div class="flex flex-wrap gap-2">
+            {sortedYears.map(([, monthsMap]) => {
+              const firstPost = [...monthsMap.values()].flat()[0];
+              return (
+                <span class="text-sm text-accent hover:underline">
+                  {getYear(firstPost.data.pubDatetime, Astro.currentLocale)}
+                </span>
+              );
+            })}
+          </div>
+        </nav>
+      )
+    }
+  </Main>
+  <Footer />
+</Layout>

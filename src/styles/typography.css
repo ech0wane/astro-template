@@ -1,0 +1,114 @@
+@plugin '@tailwindcss/typography';
+
+@layer base {
+  .prose {
+    @apply prose-headings:!mb-3 prose-headings:!text-foreground prose-h3:italic prose-p:!text-foreground prose-a:!text-foreground prose-a:!decoration-dashed prose-a:underline-offset-8 hover:prose-a:text-accent prose-blockquote:!border-l-accent/50 prose-blockquote:opacity-80 prose-figcaption:!text-foreground prose-figcaption:opacity-70 prose-strong:!text-foreground prose-code:rounded prose-code:bg-muted/75 prose-code:p-1 prose-code:!text-foreground prose-code:before:!content-none prose-code:after:!content-none prose-ol:!text-foreground prose-ul:overflow-x-clip prose-ul:!text-foreground prose-li:marker:!text-accent prose-table:text-foreground prose-th:border prose-th:border-border prose-td:border prose-td:border-border prose-img:mx-auto prose-img:!my-2 prose-img:border-2 prose-img:border-border prose-hr:!border-border;
+  }
+  .prose a {
+    @apply break-words hover:!text-accent;
+  }
+  .prose thead th:first-child,
+  tbody td:first-child,
+  tfoot td:first-child {
+    padding-inline-start: 0.5714286em !important;
+  }
+  .prose h2#table-of-contents {
+    @apply mb-2;
+  }
+  .prose details {
+    @apply inline-block cursor-pointer text-foreground select-none;
+  }
+  .prose summary {
+    @apply focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent focus-visible:outline-dashed;
+  }
+  .prose h2#table-of-contents + p {
+    @apply hidden;
+  }
+  .prose .katex-display {
+    @apply text-foreground;
+  }
+
+  /* ===== Code Blocks & Syntax Highlighting ===== */
+  pre:has(code) {
+    @apply border border-border;
+  }
+
+  .prose code,
+  .prose blockquote {
+    @apply break-words;
+  }
+
+  .prose table code {
+    /* add line breaks whenever necessary for codes under table */
+    @apply break-all sm:break-normal;
+  }
+
+  pre > code {
+    white-space: pre;
+  }
+
+  /* Apply Dark Theme (if multi-theme specified) */
+  html[data-theme="dark"] pre:has(code),
+  html[data-theme="dark"] pre:has(code) span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+    font-style: var(--shiki-dark-font-style) !important;
+    font-weight: var(--shiki-dark-font-weight) !important;
+    text-decoration: var(--shiki-dark-text-decoration) !important;
+  }
+
+  /* ===== Python Notebook Output Blocks ===== */
+  .py-exec-output {
+    @apply relative my-5 rounded-b-lg bg-muted/30 px-4 py-3;
+    margin-top: -0.5rem;
+  }
+
+  .py-exec-label {
+    @apply absolute top-0 right-3 -translate-y-1/2 rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-accent;
+  }
+
+  .py-exec-pre {
+    @apply m-0 overflow-x-auto border-0 bg-transparent p-0 text-sm leading-relaxed text-foreground;
+    font-family: "Vazir-Code", monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .py-exec-figure {
+    @apply flex flex-col items-center;
+  }
+
+  .py-exec-img {
+    @apply my-2 max-w-full rounded border-0;
+  }
+
+  .py-exec-error .py-exec-label {
+    @apply bg-red-500/15 text-red-500;
+  }
+
+  .py-exec-error .py-exec-pre {
+    @apply text-red-400;
+  }
+
+  html[data-theme="dark"] .py-exec-output {
+    @apply bg-muted/50;
+  }
+
+  html[data-theme="dark"] .py-exec-img {
+    @apply rounded border border-border;
+  }
+
+  /* Remove top border-radius from code block when followed by output */
+  .prose pre:has(code) {
+    @apply rounded-lg;
+  }
+
+  .prose .py-exec-output {
+    @apply rounded-t-none;
+  }
+
+  /* Override prose img defaults for exec output images */
+  .prose .py-exec-img {
+    @apply !my-2 border-0;
+  }
+}
